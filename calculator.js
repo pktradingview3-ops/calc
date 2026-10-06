@@ -307,11 +307,10 @@
           input = this.parseAddition();
           if (this.current().type !== 'rparen') throw new CalculationError('Missing closing bracket');
           this.consume();
-        } else if (functionName === 'sqrt') {
-          // Supports the familiar √144 notation as well as √(144).
-          input = this.parsePostfix();
         } else {
-          throw new CalculationError(`Add brackets after ${functionName}`);
+          // Natural spoken notation such as "sin 30" and "√144" uses the next value only.
+          // Keypad entry still uses the more explicit sin(30) form.
+          input = this.parsePostfix();
         }
         return { value: applyFunction(functionName, input.value, this.angleMode), percent: false };
       }
@@ -371,7 +370,145 @@
     return new ExpressionParser(expression, angleMode).evaluate();
   }
 
-  const Core = { Rational, CalculationError, evaluateExpression, formatRational };
+  const NUMBER_WORDS = {
+    zero: 0, oh: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9,
+    ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17,
+    eighteen: 18, nineteen: 19, twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70,
+    eighty: 80, ninety: 90,
+    'शून्य': 0, 'जीरो': 0, 'एक': 1, 'दो': 2, 'तीन': 3, 'चार': 4, 'पांच': 5, 'पाँच': 5, 'छह': 6, 'छः': 6,
+    'सात': 7, 'आठ': 8, 'नौ': 9, 'दस': 10, 'ग्यारह': 11, 'बारह': 12, 'तेरह': 13, 'चौदह': 14, 'पंद्रह': 15,
+    'पन्द्रह': 15, 'सोलह': 16, 'सत्रह': 17, 'अठारह': 18, 'उन्नीस': 19, 'बीस': 20, 'तीस': 30, 'चालीस': 40,
+    'पचास': 50, 'साठ': 60, 'सत्तर': 70, 'अस्सी': 80, 'नब्बे': 90,
+    ek: 1, do: 2, teen: 3, char: 4, chaar: 4, paanch: 5, cheh: 6, chhe: 6, saat: 7, aath: 8, nau: 9,
+    das: 10, gyarah: 11, barah: 12, terah: 13, chaudah: 14, pandrah: 15, solah: 16, satrah: 17,
+    atharah: 18, unnis: 19, bees: 20, tees: 30, chalis: 40, pachaas: 50, saath: 60, sattar: 70,
+    assi: 80, nabbe: 90
+  };
+
+  const NUMBER_SCALES = {
+    hundred: 100, thousand: 1000, million: 1000000,
+    'सौ': 100, 'हजार': 1000, 'लाख': 100000, 'करोड़': 10000000,
+    sau: 100, hazaar: 1000, lakh: 100000, crore: 10000000
+  };
+
+  function isNumberWord(word) {
+    return Object.prototype.hasOwnProperty.call(NUMBER_WORDS, word)
+      || Object.prototype.hasOwnProperty.call(NUMBER_SCALES, word)
+      || word === 'point';
+  }
+
+  function numberPhraseToDigits(words) {
+    let total = 0;
+    let current = 0;
+    let fractional = '';
+    let decimalMode = false;
+    words.forEach((word) => {
+      if (word === 'point') {
+        decimalMode = true;
+        return;
+      }
+      const value = NUMBER_WORDS[word];
+      if (decimalMode) {
+        // Spoken decimals are normally digit by digit: "one point zero five".
+        fractional += String(value);
+        return;
+      }
+      if (value !== undefined) {
+        current += value;
+        return;
+      }
+      const scale = NUMBER_SCALES[word];
+      if (scale === 100) current = (current || 1) * scale;
+      else {
+        total += (current || 1) * scale;
+        current = 0;
+      }
+    });
+    const integer = total + current;
+    return `${integer}${decimalMode ? `.${fractional || '0'}` : ''}`;
+  }
+
+  /**
+   * Turns a small, purposeful spoken-math vocabulary into the same safe expression
+   * string used by the keypad. Supports English, Hindi and common Hinglish number words.
+   */
+  function spokenToExpression(transcript) {
+    if (!transcript || !String(transcript).trim()) throw new CalculationError('I did not hear a calculation');
+    let spoken = String(transcript).toLowerCase().trim()
+      .replace(/,/g, ' ')
+      .replace(/[?!]/g, ' ')
+      .replace(/[–—]/g, '-')
+      .replace(/([()+\-*/^%])/g, ' $1 ');
+
+    const phrases = [
+      [/raised to (?:the )?power of|to the power of|power of/g, ' ^ '],
+      [/divided by|divide by|over/g, ' ÷ '],
+      [/multiplied by|multiply by|times|into/g, ' × '],
+      [/square root of|square root|root of/g, ' sqrt '],
+      [/natural logarithm of|natural log of|ln of/g, ' ln '],
+      [/logarithm of|log of/g, ' log '],
+      [/cosine of|cos of|cosine/g, ' cos '],
+      [/sine of|sin of|sine/g, ' sin '],
+      [/tangent of|tan of|tangent/g, ' tan '],
+      [/squared/g, ' ^ 2 '],
+      [/cubed/g, ' ^ 3 '],
+      [/factorial/g, ' ! '],
+      [/open (?:parenthesis|bracket)/g, ' ( '],
+      [/close (?:parenthesis|bracket)/g, ' ) '],
+      [/percentage|percent/g, ' % '],
+      [/negative/g, ' − '],
+      [/plus|add/g, ' + '],
+      [/minus|subtract/g, ' − '],
+      [/equals?|calculate|what is|what's|please/g, ' '],
+      [/से\s*भाग|भाग\s*दे|भाग/g, ' ÷ '],
+      [/गुणा|गुना|इंटू|बार/g, ' × '],
+      [/वर्ग\s*मूल|वर्गमूल|रूट/g, ' sqrt '],
+      [/प्राकृतिक\s*लघुगणक|एल\s*एन/g, ' ln '],
+      [/लघुगणक|लॉग/g, ' log '],
+      [/कोसाइन/g, ' cos '],
+      [/साइन/g, ' sin '],
+      [/टैन्जेंट|टैन/g, ' tan '],
+      [/खुला\s*(?:ब्रैकेट|कोष्ठक)/g, ' ( '],
+      [/बंद\s*(?:ब्रैकेट|कोष्ठक)/g, ' ) '],
+      [/प्रतिशत|परसेंट/g, ' % '],
+      [/दशमलव|पॉइंट/g, ' point '],
+      [/ऋण/g, ' − '],
+      [/जोड़|जोड|प्लस/g, ' + '],
+      [/माइनस|घटाना/g, ' − '],
+      [/पाई/g, ' π ']
+    ];
+    phrases.forEach(([pattern, replacement]) => { spoken = spoken.replace(pattern, replacement); });
+
+    const ignored = new Set(['and', 'the', 'a', 'an', 'of', 'by', 'का', 'की', 'के']);
+    const allowed = new Set(['+', '−', '×', '÷', '^', '%', '!', '(', ')', 'pi', 'π', 'e', 'sin', 'cos', 'tan', 'sqrt', 'ln', 'log']);
+    const tokens = spoken.trim().split(/\s+/).filter(Boolean).filter((word) => !ignored.has(word));
+    const output = [];
+
+    for (let index = 0; index < tokens.length;) {
+      const token = tokens[index];
+      if (isNumberWord(token)) {
+        const numberWords = [];
+        while (index < tokens.length && isNumberWord(tokens[index])) {
+          numberWords.push(tokens[index]);
+          index += 1;
+        }
+        output.push(numberPhraseToDigits(numberWords));
+        continue;
+      }
+      if (/^\d+(?:\.\d+)?$/.test(token) || allowed.has(token)) {
+        output.push(token === 'pi' ? 'π' : token);
+        index += 1;
+        continue;
+      }
+      throw new CalculationError(`I couldn't use “${token}”`);
+    }
+
+    const expression = output.join('');
+    if (!expression || !/[\dπe]/.test(expression)) throw new CalculationError('Say a calculation, for example two plus two');
+    return expression;
+  }
+
+  const Core = { Rational, CalculationError, evaluateExpression, formatRational, spokenToExpression };
   global.CalculatorCore = Core;
   if (typeof module !== 'undefined' && module.exports) module.exports = Core;
 
@@ -390,6 +527,10 @@
   const historyCount = $('#historyCount');
   const scrim = $('#scrim');
   const toast = $('#toast');
+  const voiceButton = $('#voiceButton');
+  const voiceLanguageButton = $('#voiceLanguage');
+  const voiceStatus = $('#voiceStatus');
+  const voiceStatusText = $('#voiceStatusText');
 
   const store = {
     get(key, fallback) {
@@ -407,11 +548,16 @@
       this.justEvaluated = false;
       this.mode = store.get('calc-mode', 'basic') === 'scientific' ? 'scientific' : 'basic';
       this.angleMode = store.get('calc-angle-mode', 'DEG') === 'RAD' ? 'RAD' : 'DEG';
+      this.voiceLocale = store.get('calc-voice-locale', 'en-IN') === 'hi-IN' ? 'hi-IN' : 'en-IN';
+      this.isListening = false;
+      this.speechRecognition = null;
+      this.voiceStatusTimeout = null;
       this.memory = this.loadMemory();
       this.history = this.loadHistory();
       this.toastTimeout = null;
       this.setMode(this.mode, false);
       this.setAngleMode(this.angleMode, false);
+      this.setVoiceLocale(this.voiceLocale, false);
       this.applyTheme(store.get('calc-theme', this.systemPrefersLight() ? 'light' : 'dark'), false);
       this.renderHistory();
       this.updateMemoryIndicator();
@@ -444,6 +590,8 @@
       scientificButton.addEventListener('click', () => this.setMode('scientific'));
       angleButton.addEventListener('click', () => this.setAngleMode(this.angleMode === 'DEG' ? 'RAD' : 'DEG'));
       $('#themeButton').addEventListener('click', () => this.applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+      voiceButton.addEventListener('click', () => this.toggleVoiceRecognition());
+      voiceLanguageButton.addEventListener('click', () => this.setVoiceLocale(this.voiceLocale === 'en-IN' ? 'hi-IN' : 'en-IN'));
       $('#historyButton').addEventListener('click', () => this.openHistory());
       $('#closeHistory').addEventListener('click', () => this.closeHistory());
       $('#clearHistory').addEventListener('click', () => this.clearHistory());
@@ -469,6 +617,116 @@
       if (persist) {
         store.set('calc-angle-mode', mode);
         this.updatePreview();
+      }
+    }
+
+    setVoiceLocale(locale, persist = true) {
+      this.voiceLocale = locale === 'hi-IN' ? 'hi-IN' : 'en-IN';
+      const isHindi = this.voiceLocale === 'hi-IN';
+      voiceLanguageButton.textContent = isHindi ? 'हिं' : 'EN';
+      voiceLanguageButton.setAttribute('aria-label', `Voice recognition language: ${isHindi ? 'Hindi' : 'English'}. Switch language`);
+      voiceLanguageButton.title = `Voice language: ${isHindi ? 'Hindi' : 'English'}`;
+      if (persist) {
+        store.set('calc-voice-locale', this.voiceLocale);
+        this.showToast(`Voice language: ${isHindi ? 'Hindi' : 'English'}`);
+      }
+    }
+
+    setVoiceStatus(message, visible = true) {
+      clearTimeout(this.voiceStatusTimeout);
+      voiceStatusText.textContent = message;
+      voiceStatus.hidden = !visible;
+      if (visible && !this.isListening) {
+        this.voiceStatusTimeout = setTimeout(() => { voiceStatus.hidden = true; }, 3400);
+      }
+    }
+
+    setListening(listening) {
+      this.isListening = listening;
+      voiceButton.classList.toggle('is-listening', listening);
+      voiceButton.setAttribute('aria-label', listening ? 'Stop voice calculation' : 'Start voice calculation');
+      voiceButton.title = listening ? 'Stop listening' : 'Speak a calculation';
+    }
+
+    toggleVoiceRecognition() {
+      if (this.isListening && this.speechRecognition) {
+        this.speechRecognition.stop();
+        return;
+      }
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        this.setVoiceStatus('Voice input is not supported by this browser. Try Chrome on Android or desktop.', true);
+        this.showToast('Voice input is unavailable in this browser');
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      this.speechRecognition = recognition;
+      recognition.lang = this.voiceLocale;
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        this.setListening(true);
+        this.setVoiceStatus(`Listening in ${this.voiceLocale === 'hi-IN' ? 'Hindi' : 'English'}… say “two hundred plus ten percent”`, true);
+      };
+      recognition.onresult = (event) => {
+        let finalTranscript = '';
+        let interimTranscript = '';
+        for (let index = event.resultIndex; index < event.results.length; index += 1) {
+          const transcript = event.results[index][0].transcript;
+          if (event.results[index].isFinal) finalTranscript += transcript;
+          else interimTranscript += transcript;
+        }
+        if (interimTranscript) this.setVoiceStatus(`Listening… “${interimTranscript.trim()}”`, true);
+        if (finalTranscript) this.useVoiceTranscript(finalTranscript.trim());
+      };
+      recognition.onerror = (event) => {
+        const messages = {
+          'not-allowed': 'Microphone permission was not granted.',
+          'service-not-allowed': 'Voice service is not available.',
+          'no-speech': 'No speech detected. Please try again.',
+          'audio-capture': 'No microphone was found.'
+        };
+        const message = messages[event.error] || 'Voice input could not be completed.';
+        this.setVoiceStatus(message, true);
+        this.showToast(message);
+      };
+      recognition.onend = () => {
+        this.setListening(false);
+        this.speechRecognition = null;
+        if (!voiceStatus.hidden) {
+          clearTimeout(this.voiceStatusTimeout);
+          this.voiceStatusTimeout = setTimeout(() => { voiceStatus.hidden = true; }, 3400);
+        }
+      };
+      try {
+        recognition.start();
+      } catch (_) {
+        this.setListening(false);
+        this.showToast('Voice input is already starting. Please try again.');
+      }
+    }
+
+    useVoiceTranscript(transcript) {
+      try {
+        const expression = spokenToExpression(transcript);
+        if ((expression.match(/\d/g) || []).length > 30) throw new CalculationError('Voice input is limited to 30 digits');
+        this.expression = expression;
+        this.justEvaluated = false;
+        this.updatePreview();
+        this.equals();
+        const isError = resultOutput.classList.contains('is-error');
+        if (isError) this.setVoiceStatus(`Heard “${transcript}”. Check the expression shown above.`, true);
+        else {
+          this.setVoiceStatus(`Heard “${transcript}” · ${expression} = ${this.lastResult}`, true);
+          this.showToast('Voice calculation complete');
+        }
+      } catch (error) {
+        const message = error instanceof CalculationError ? error.message : 'Voice calculation could not be read';
+        this.setVoiceStatus(message, true);
+        this.showToast(message);
       }
     }
 

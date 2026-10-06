@@ -21,6 +21,10 @@
             <span>calc</span>
           </div>
           <div class="header-actions">
+            <button class="voice-language" id="voiceLanguage" type="button" aria-label="Voice recognition language: English. Switch language" title="Voice recognition language">EN</button>
+            <button class="icon-button voice-button" id="voiceButton" type="button" aria-label="Start voice calculation" title="Speak a calculation">
+              <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="M12 14.5a3.5 3.5 0 0 0 3.5-3.5V5a3.5 3.5 0 1 0-7 0v6a3.5 3.5 0 0 0 3.5 3.5Zm6-4.5a1 1 0 1 0-2 0 4 4 0 0 1-8 0 1 1 0 1 0-2 0 6 6 0 0 0 5 5.91V19H8a1 1 0 1 0 0 2h8a1 1 0 1 0 0-2h-3v-3.09A6 6 0 0 0 18 10Z" /></svg>
+            </button>
             <button class="icon-button" id="themeButton" type="button" aria-label="Switch to light theme" title="Switch theme">
               <span class="theme-icon" aria-hidden="true">☼</span>
             </button>
@@ -41,6 +45,10 @@
             <span class="memory-pill" id="memoryIndicator" aria-live="polite" title="Memory">M</span>
           </div>
         </section>
+        <p class="voice-status" id="voiceStatus" role="status" aria-live="polite" hidden>
+          <span class="voice-status-dot" aria-hidden="true"></span>
+          <span id="voiceStatusText">Listening…</span>
+        </p>
 
         <section class="display" aria-live="polite" aria-atomic="true">
           <div class="expression-wrap">
