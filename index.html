@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#10121a" />
+    <meta
+      name="description"
+      content="Calc is a fast, private, offline-ready scientific calculator."
+    />
+    <title>Calc — everyday math, beautifully simple</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell" aria-label="Calculator application">
+      <section class="calculator" aria-label="Calculator">
+        <header class="app-header">
+          <div class="brand" aria-label="Calc home">
+            <span class="brand-mark" aria-hidden="true">+</span>
+            <span>calc</span>
+          </div>
+          <div class="header-actions">
+            <button class="icon-button" id="themeButton" type="button" aria-label="Switch to light theme" title="Switch theme">
+              <span class="theme-icon" aria-hidden="true">☼</span>
+            </button>
+            <button class="history-trigger" id="historyButton" type="button" aria-label="Open calculation history">
+              <span aria-hidden="true">◷</span>
+              <span class="history-trigger-text">History</span>
+            </button>
+          </div>
+        </header>
+
+        <section class="mode-bar" aria-label="Calculator controls">
+          <div class="segmented-control" role="group" aria-label="Calculator mode">
+            <button class="segment is-active" id="basicMode" type="button" aria-pressed="true">Basic</button>
+            <button class="segment" id="scientificMode" type="button" aria-pressed="false">Scientific</button>
+          </div>
+          <div class="status-controls">
+            <button class="degree-toggle" id="angleMode" type="button" aria-label="Use degrees for trigonometry">DEG</button>
+            <span class="memory-pill" id="memoryIndicator" aria-live="polite" title="Memory">M</span>
+          </div>
+        </section>
+
+        <section class="display" aria-live="polite" aria-atomic="true">
+          <div class="expression-wrap">
+            <output class="expression" id="expression" aria-label="Current expression">0</output>
+            <button class="backspace-button" id="backspace" type="button" aria-label="Delete last input" title="Delete last input">⌫</button>
+          </div>
+          <div class="result-row">
+            <output class="result" id="result" aria-label="Live result">0</output>
+            <button class="copy-button" id="copyButton" type="button" aria-label="Copy result" title="Copy result">
+              <span aria-hidden="true">⧉</span>
+              <span class="copy-label">Copy</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="scientific-panel" id="scientificPanel" aria-label="Scientific calculator keys" hidden>
+          <div class="memory-row">
+            <button class="key key-memory" data-action="memory-clear" type="button" aria-label="Memory clear">MC</button>
+            <button class="key key-memory" data-action="memory-recall" type="button" aria-label="Memory recall">MR</button>
+            <button class="key key-memory" data-action="memory-add" type="button" aria-label="Add result to memory">M+</button>
+            <button class="key key-memory" data-action="memory-subtract" type="button" aria-label="Subtract result from memory">M−</button>
+          </div>
+          <div class="scientific-grid">
+            <button class="key key-scientific" data-action="function" data-value="sin" type="button">sin</button>
+            <button class="key key-scientific" data-action="function" data-value="cos" type="button">cos</button>
+            <button class="key key-scientific" data-action="function" data-value="tan" type="button">tan</button>
+            <button class="key key-scientific" data-action="function" data-value="sqrt" type="button">√</button>
+            <button class="key key-scientific" data-action="factorial" type="button">x!</button>
+            <button class="key key-scientific" data-action="function" data-value="ln" type="button">ln</button>
+            <button class="key key-scientific" data-action="function" data-value="log" type="button">log</button>
+            <button class="key key-scientific" data-action="square" type="button">x²</button>
+            <button class="key key-scientific" data-action="power" type="button">xʸ</button>
+            <button class="key key-scientific" data-action="constant" data-value="π" type="button">π</button>
+            <button class="key key-scientific" data-action="constant" data-value="e" type="button">e</button>
+            <button class="key key-scientific" data-action="brackets" type="button" aria-label="Open or close brackets">( )</button>
+          </div>
+        </section>
+
+        <section class="keypad" aria-label="Calculator keypad">
+          <button class="key key-clear" data-action="clear" type="button">C</button>
+          <button class="key key-utility" data-action="brackets" type="button" aria-label="Open or close brackets">( )</button>
+          <button class="key key-utility" data-action="percent" type="button" aria-label="Percent">%</button>
+          <button class="key key-operator" data-action="operator" data-value="÷" type="button" aria-label="Divide">÷</button>
+
+          <button class="key key-number" data-action="number" data-value="7" type="button">7</button>
+          <button class="key key-number" data-action="number" data-value="8" type="button">8</button>
+          <button class="key key-number" data-action="number" data-value="9" type="button">9</button>
+          <button class="key key-operator" data-action="operator" data-value="×" type="button" aria-label="Multiply">×</button>
+
+          <button class="key key-number" data-action="number" data-value="4" type="button">4</button>
+          <button class="key key-number" data-action="number" data-value="5" type="button">5</button>
+          <button class="key key-number" data-action="number" data-value="6" type="button">6</button>
+          <button class="key key-operator" data-action="operator" data-value="−" type="button" aria-label="Subtract">−</button>
+
+          <button class="key key-number" data-action="number" data-value="1" type="button">1</button>
+          <button class="key key-number" data-action="number" data-value="2" type="button">2</button>
+          <button class="key key-number" data-action="number" data-value="3" type="button">3</button>
+          <button class="key key-operator" data-action="operator" data-value="+" type="button" aria-label="Add">+</button>
+
+          <button class="key key-utility" data-action="sign" type="button" aria-label="Toggle positive or negative">±</button>
+          <button class="key key-number" data-action="number" data-value="0" type="button">0</button>
+          <button class="key key-number" data-action="decimal" type="button" aria-label="Decimal point">.</button>
+          <button class="key key-equals" data-action="equals" type="button" aria-label="Equals">=</button>
+        </section>
+      </section>
+
+      <aside class="history-panel" id="historyPanel" aria-label="Calculation history" aria-hidden="true">
+        <div class="history-heading">
+          <div>
+            <span class="eyebrow">ON THIS DEVICE</span>
+            <h2>History</h2>
+          </div>
+          <button class="icon-button close-history" id="closeHistory" type="button" aria-label="Close history">×</button>
+        </div>
+        <div class="history-list" id="historyList"></div>
+        <div class="history-footer">
+          <button class="text-button" id="clearHistory" type="button">Clear history</button>
+          <span id="historyCount" aria-live="polite"></span>
+        </div>
+      </aside>
+      <div class="scrim" id="scrim" hidden></div>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+    <noscript><p class="noscript">Calc needs JavaScript enabled to perform calculations.</p></noscript>
+    <script src="calculator.js"></script>
+  </body>
+</html>
