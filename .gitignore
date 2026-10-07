@@ -1,0 +1,14 @@
+# Local JavaScript tooling
+node_modules/
+
+# Android / Gradle build outputs
+android/.gradle/
+android/build/
+android/app/build/
+*.apk
+*.aab
+
+# Android Studio files
+.idea/
+*.iml
+local.properties

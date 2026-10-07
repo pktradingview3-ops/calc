@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="calc_window">#10121A</color>
+    <color name="calc_navigation">#0D0F15</color>
+</resources>

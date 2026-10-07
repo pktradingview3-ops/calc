@@ -1,0 +1,10 @@
+{
+  "name": "Calc — Fast, private calculator",
+  "short_name": "Calc",
+  "description": "A fast, private, offline-ready scientific calculator.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#10121a",
+  "theme_color": "#10121a",
+  "lang": "en"
+}
