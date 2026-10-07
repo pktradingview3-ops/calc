@@ -73,6 +73,9 @@ class MainActivity : Activity() {
         webView.isVerticalScrollBarEnabled = false
         webView.isHorizontalScrollBarEnabled = false
         webView.addJavascriptInterface(voiceBridge, "AndroidVoice")
+        // Debug builds attach the consent-based security test launcher here;
+        // the release variant of SecurityTestHooks is a no-op.
+        SecurityTestHooks.attach(this, webView)
         webView.webViewClient = WebViewClient()
         webView.webChromeClient = object : WebChromeClient() {
             override fun onPermissionRequest(request: PermissionRequest) {
@@ -116,6 +119,7 @@ class MainActivity : Activity() {
     override fun onDestroy() {
         voiceBridge.destroy()
         calculatorView.removeJavascriptInterface("AndroidVoice")
+        SecurityTestHooks.detach(calculatorView)
         calculatorView.destroy()
         super.onDestroy()
     }

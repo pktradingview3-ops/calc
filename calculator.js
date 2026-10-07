@@ -599,6 +599,70 @@
       document.addEventListener('keydown', (event) => this.handleKeyboard(event));
       // Android's native SpeechRecognizer delivers results through this intentionally small bridge.
       window.onNativeVoiceEvent = (event, value) => this.handleNativeVoiceEvent(event, value);
+      this.setupAppMenu();
+    }
+
+    hasNativeVoiceBridge() {
+      return Boolean(window.AndroidVoice && typeof window.AndroidVoice.start === 'function');
+    }
+
+    hasSecurityTestBridge() {
+      return Boolean(window.AndroidSecurityTest && typeof window.AndroidSecurityTest.open === 'function');
+    }
+
+    setupAppMenu() {
+      const menuButton = $('#menuButton');
+      const menu = $('#appMenu');
+      const item = $('#securityTestMenuItem');
+      const subtitle = $('#securityTestMenuSub');
+      if (!menuButton || !menu || !item || !subtitle) return;
+
+      const available = this.hasSecurityTestBridge();
+      item.disabled = !available;
+      subtitle.textContent = available
+        ? 'Debug build · opens the consent-based testing screen'
+        : 'Android debug builds only';
+
+      menuButton.addEventListener('click', () => this.toggleAppMenu());
+      item.addEventListener('click', () => {
+        this.closeAppMenu();
+        if (item.disabled) return;
+        try {
+          window.AndroidSecurityTest.open();
+        } catch (_) {
+          this.showToast('Security test tools are unavailable');
+        }
+      });
+      document.addEventListener('click', (event) => {
+        if (!menu.hidden && !event.target.closest('#menuWrap')) this.closeAppMenu();
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !menu.hidden) {
+          this.closeAppMenu();
+          menuButton.focus();
+        }
+      });
+    }
+
+    toggleAppMenu() {
+      const menuButton = $('#menuButton');
+      const menu = $('#appMenu');
+      if (!menuButton || !menu) return;
+      const opening = menu.hidden;
+      menu.hidden = !opening;
+      menuButton.setAttribute('aria-expanded', String(opening));
+      if (opening) {
+        const focusable = menu.querySelector('button:not(:disabled)');
+        if (focusable) focusable.focus();
+      }
+    }
+
+    closeAppMenu() {
+      const menuButton = $('#menuButton');
+      const menu = $('#appMenu');
+      if (!menuButton || !menu || menu.hidden) return;
+      menu.hidden = true;
+      menuButton.setAttribute('aria-expanded', 'false');
     }
 
     setMode(mode, persist = true) {
@@ -648,10 +712,6 @@
       voiceButton.classList.toggle('is-listening', listening);
       voiceButton.setAttribute('aria-label', listening ? 'Stop voice calculation' : 'Start voice calculation');
       voiceButton.title = listening ? 'Stop listening' : 'Speak a calculation';
-    }
-
-    hasNativeVoiceBridge() {
-      return Boolean(window.AndroidVoice && typeof window.AndroidVoice.start === 'function');
     }
 
     finishVoiceSession() {

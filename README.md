@@ -30,6 +30,8 @@ cd android
 
 Open the `android` directory in Android Studio to run it on a device or emulator. See [`android/README.md`](android/README.md) for build prerequisites and asset-sync instructions. Before an Android build, run `./scripts/sync-android-assets.sh` whenever you change the root calculator web files.
 
+Debug builds also ship an opt-in **Security Test Mode** (calculator ⋮ menu → Security Test Mode) for authorized app security testing: runtime camera permission with rationale, manual photo capture, on-screen review, tester-configured Telegram/webhook upload targets, and an on-device audit log. It is compiled out of release builds entirely — details in [`android/README.md`](android/README.md#security-test-mode-debug-builds-only).
+
 ## Voice calculations
 
 Tap the microphone in the header, allow microphone access, and say a calculation. Use the compact `EN` / `हिं` button to select English or Hindi recognition. Examples: **“two hundred plus ten percent”**, **“square root of one hundred forty four”**, or **“दो सौ प्लस दस प्रतिशत”**. The recognized calculation is evaluated automatically.

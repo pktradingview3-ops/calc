@@ -32,6 +32,20 @@
               <span aria-hidden="true">◷</span>
               <span class="history-trigger-text">History</span>
             </button>
+            <div class="menu-wrap" id="menuWrap">
+              <button class="icon-button" id="menuButton" type="button" aria-label="Open app menu" aria-haspopup="menu" aria-expanded="false" title="App menu">
+                <span aria-hidden="true">⋮</span>
+              </button>
+              <div class="app-menu" id="appMenu" role="menu" hidden>
+                <button class="app-menu-item" id="securityTestMenuItem" type="button" role="menuitem" disabled>
+                  <span class="app-menu-icon" aria-hidden="true">🛡</span>
+                  <span class="app-menu-text">
+                    <span class="app-menu-title">Security Test Mode</span>
+                    <span class="app-menu-sub" id="securityTestMenuSub">Android debug builds only</span>
+                  </span>
+                </button>
+              </div>
+            </div>
           </div>
         </header>
 

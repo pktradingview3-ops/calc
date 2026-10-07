@@ -4,7 +4,7 @@
   "private": true,
   "description": "Fast, private, offline-ready calculator",
   "scripts": {
-    "test": "node tests/calculator.test.js && node tests/android-assets.test.js",
+    "test": "node tests/calculator.test.js && node tests/android-assets.test.js && node tests/security-test-mode.test.js",
     "start": "python3 -m http.server 4173 --bind 0.0.0.0",
     "sync:android": "./scripts/sync-android-assets.sh"
   }
